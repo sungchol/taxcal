@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>세액계산기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <h1>세액계산기</h1>
+        <p>
+          종합소득세, 양도소득세, 증여세, 상속세, 법인세, 취득세를 입력하는 즉시
+          계산한다. 세법 기준일 2026년 11월 1일.
+        </p>
+      </div>
+    </header>
+    <nav class="tabs" aria-label="세목">
+      <div class="wrap">
+        <a href="#income">종합소득세</a>
+        <a href="#realty">양도소득세 (부동산)</a>
+        <a href="#stock">양도소득세 (주식)</a>
+        <a href="#gift">증여세</a>
+        <a href="#inheritance">상속세</a>
+        <a href="#corp">법인세</a>
+        <a href="#acquisition">취득세</a>
+      </div>
+    </nav>
+    <main>
+      <div class="wrap">
+        <section class="view" id="v-income" data-tab="income"></section>
+        <section class="view" id="v-realty" data-tab="realty" hidden></section>
+        <section class="view" id="v-stock" data-tab="stock" hidden></section>
+        <section class="view" id="v-gift" data-tab="gift" hidden></section>
+        <section
+          class="view"
+          id="v-inheritance"
+          data-tab="inheritance"
+          hidden
+        ></section>
+        <section class="view" id="v-corp" data-tab="corp" hidden></section>
+        <section
+          class="view"
+          id="v-acquisition"
+          data-tab="acquisition"
+          hidden
+        ></section>
+        <p class="disclaimer">
+          이 계산 결과는 현행 세법을 바탕으로 한 예상세액이며 실제 신고세액과
+          다를 수 있다. 또한, 공제감면세액 요건 판정은 반영하지 않았으므로 신고
+          전 국세청 홈택스나 세무 전문가를 통해 확인해야 한다.
+        </p>
+      </div>
+    </main>
+    <div class="bar" aria-live="polite">
+      <div>
+        <div class="k" id="bar-k">총예상세액</div>
+        <div class="v" id="bar-v">0원</div>
+      </div>
+      <button class="btn primary" id="bar-go" type="button">계산서 보기</button>
+    </div>
+    <datalist id="bizcodes"></datalist>
+
+    <!-- namespace -->
+    <script src="js/namespace.js"></script>
+    <!-- 데이터 -->
+    <script src="js/data/tax-tables.js"></script>
+    <script src="js/data/rates-db.js"></script>
+    <!-- 공통 -->
+    <script src="js/common/util.js"></script>
+    <script src="js/common/ui.js"></script>
+    <!-- 세목별 -->
+    <script src="js/tax/income.js"></script>
+    <script src="js/tax/realty.js"></script>
+    <script src="js/tax/stock.js"></script>
+    <script src="js/tax/gift.js"></script>
+    <script src="js/tax/inheritance.js"></script>
+    <script src="js/tax/corp.js"></script>
+    <script src="js/tax/acquisition.js"></script>
+    <!-- 실행 -->
+    <script src="js/app.js"></script>
+  </body>
+</html>
