@@ -194,7 +194,7 @@
       Object.assign(newItem(1), {
         oneHouse: false,
         acqDate: "",
-        saleDate: "2026-11-01",
+        saleDate: U.today(),
         inDate: "",
         outDate: "",
         salePrice: 0,

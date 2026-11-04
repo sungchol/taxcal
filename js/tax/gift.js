@@ -97,7 +97,7 @@
   /* ── 예시값 (엑셀) ── */
   const example = () => ({
     birth: "",
-    giftDate: "2026-11-01",
+    giftDate: U.today(),
     rel: "child",
     value: 0,
     prior: 0,

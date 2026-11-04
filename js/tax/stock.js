@@ -85,7 +85,7 @@
         major: true,
         nonSme: false,
         acqDate: "",
-        saleDate: "2026-11-01",
+        saleDate: U.today(),
         salePrice: 0,
         acqPrice: 0,
         fee: 0,
