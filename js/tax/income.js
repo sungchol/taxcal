@@ -400,14 +400,23 @@
       overridden[k] = ov[k] != null;
       credits[k] = overridden[k] ? n(ov[k]) : autoCr[k];
     });
+
     // 기타 세액공제·세액감면 (직접 입력)
     const extras = (st.extraCredits || []).filter((e) => n(e.amount));
     const reduction = extras
       .filter((e) => e.kind === "reduction")
       .reduce((s, e) => s + n(e.amount), 0);
-    const extraCredit = extras
+    let extraCredit = extras
       .filter((e) => e.kind !== "reduction")
       .reduce((s, e) => s + n(e.amount), 0);
+    //중소기업감면
+    const auto = n(
+      (((D35 * st.specialReduction) / E17) * st.specialRate) / 100,
+    );
+    overridden.specialReduction = ov.specialReduction != null;
+    const tax = overridden.specialReduction ? n(ov.specialReduction) : auto;
+    extraCredit += tax;
+
     const D38 = Object.values(credits).reduce((s, v) => s + v, 0) + extraCredit;
     const D54 = pos(D35 - reduction - D38);
     const E54 = fl(D54 * TAX.tables.LOCAL_RATE);
@@ -458,6 +467,12 @@
       extras,
       reduction,
       extraCredit,
+      specialTaxReduction: {
+        auto,
+        tax,
+        amount: st.specialReduction,
+        rate: st.specialRate / 100,
+      },
       wageCrLimit,
       pensionRate,
       D38,
@@ -530,7 +545,7 @@
     biz: [
       {
         code: "701201",
-        revenue: 0,
+        revenue: 20000000,
         wh: 0,
         own: false,
         disabled: false,
@@ -606,7 +621,7 @@
   };
   // 소득 한 줄: 수입금액 | 필요경비(있을 때) | 원천징수세액
   const line = (revPath, revLabel, whPath, expPath, expLabel) =>
-    `<div class="line">${UI.money(revPath, revLabel)}${expPath ? UI.money(expPath, expLabel) : UI.blankCell()}${UI.money(whPath, "원천징수세액")}</div>`;
+    `<div class="line">${UI.money(revPath, revLabel)}${expPath ? UI.money(expPath, expLabel) : UI.blankCell()}${UI.money(whPath, `원천징수세액: ${revLabel}`)}</div>`;
 
   /* ── 세액공제 입력: [기준 금액] [ ] [공제액(자동, 수정 가능)] ── */
   const CREDIT_ROWS = [
@@ -714,13 +729,24 @@
       return `직접 수정함, 자동 계산 ${U.won(r.autoCr[k])}원 <button class="linkbtn" type="button" data-act="auto" data-p="income.crOv.${k}">자동값으로</button>`;
     return hint ? `자동 계산, ${hint}` : "자동 계산";
   }
+
   function creditCell(k, r) {
     const v = r.overridden[k] ? r.cr[k] : r.autoCr[k];
     return `<div class="f cr${r.overridden[k] ? " manual" : ""}" data-crbox="${k}">
-      <span class="l">공제액</span>
+      <span class="l">${CREDIT_LABEL[k]}</span>
       <span class="in"><input class="won" inputmode="numeric" autocomplete="off" aria-label="${CREDIT_LABEL[k]} 공제액" data-p="income.crOv.${k}" data-t="ovmoney" data-ov="${k}" value="${v ? U.won(v) : ""}" placeholder="0"><i>원</i></span>
       <small data-crmsg="${k}">${creditMsg(k, r)}</small></div>`;
   }
+
+  // 중소기업특별세액감면 massage
+  function specialReductionMsg(r) {
+    console.log("specialTaxReduction:", r.overridden.specialReduction);
+    if (r.overridden.specialReduction)
+      return `직접 수정함, 자동 계산 ${U.won(r.specialTaxReduction.auto)}원 <button class="linkbtn" type="button" data-act="auto" data-p="income.crOv.specialReduction">자동값으로</button>`;
+    return "자동 계산";
+  }
+
+  // 세액공제 입력 화면
   function creditSection(s) {
     const r = calc(s);
     const rows = CREDIT_ROWS.map((c) => {
@@ -736,6 +762,7 @@
       while (cells.length < 2) cells.push(UI.blankCell());
       return `<div class="line">${cells.join("")}${creditCell(c.k, r)}</div>`;
     }).join("");
+
     const extras = (s.extraCredits || [])
       .map((e, i) => {
         const P = `income.extraCredits.${i}`;
@@ -751,14 +778,28 @@
       </div>`;
       })
       .join("");
-    return `<fieldset><legend>세액공제</legend>
+
+    // 중소기업특별세액감면
+    const extra_specialReduction = `
+      <div class="line extra">
+        ${UI.money(`income.specialReduction`, "중소기업 감면소득")}
+        ${UI.num(`income.specialRate`, "감면율", "%")}
+        <div class="f cr${r.overridden.specialReduction ? " manual" : ""}" data-crbox="specialReduction">
+          <span class="l">중소기업특별세액공제</span>
+          <span class="in"><input class="won" inputmode="numeric" autocomplete="off" aria-label="중소기업특별세액 공제" data-p="income.crOv.specialReduction" data-t="ovmoney" data-ov="specialtax" value="" placeholder="0"><i>원</i></span>
+          <small data-crmsg="specialReduction">${specialReductionMsg(r)}</small>
+        </div>
+      </div>
+      `;
+
+    return `<fieldset data-key="credits"><legend>세액공제</legend>
       <p class="note top">공제액 칸에는 자동 계산값이 들어간다. 금액을 고치면 그 값으로 계산하고, 칸을 비우거나 '자동값으로'를 누르면 다시 자동 계산값을 쓴다.</p>
       ${rows}</fieldset>
-      <div class="separator"></div>
-      <details data-key="extraCredits"><summary class="group-summary">기타 세액공제·세액감면</summary>
+      <fieldset data-key="extraCredits"><legend>기타 세액공제·세액감면</legend>
+      ${extra_specialReduction}
       ${extras}
       <button class="btn add" type="button" data-act="add" data-list="income.extraCredits">항목 추가</button>
-      <p class="note">위 목록에 없는 세액공제(출산·입양, 혼인, 기장, 성실신고확인비용 등)나 세액감면을 직접 넣는다. 세액감면은 세액공제보다 먼저 산출세액에서 뺀다.</p></details>`;
+      <p class="note">위 목록에 없는 세액공제(출산·입양, 혼인, 기장, 성실신고확인비용 등)나 세액감면을 직접 넣는다. </p></fieldset>`;
   }
 
   // 계산 후 공제액 칸 갱신: 직접 수정하지 않은 칸은 새 자동값으로 바꾼다 (입력 중인 칸은 건드리지 않는다)
@@ -775,6 +816,20 @@
       const msg = box.querySelector(`[data-crmsg="${k}"]`);
       if (msg) msg.innerHTML = creditMsg(k, r);
     });
+
+    // 중소기업특별세액감면
+    const box = document.querySelector(`[data-crbox="specialReduction"]`);
+    if (box) {
+      const input = box.querySelector("input");
+      const manual = r.overridden.specialReduction;
+      box.classList.toggle("manual", manual);
+      if (!manual && document.activeElement !== input)
+        input.value = r.specialTaxReduction.tax
+          ? U.won(r.specialTaxReduction.tax)
+          : "";
+      const msg = box.querySelector(`[data-crmsg="specialReduction"]`);
+      if (msg) msg.innerHTML = specialReductionMsg(r);
+    }
   }
 
   /* ── 분리과세 소득 입력 ── */
@@ -926,6 +981,8 @@
       pct = U.pct;
     const whText = (v) => (v ? `원천징수 ${won(v)}` : "");
     const rows = [R("소득금액", "", "head")];
+    console.log("state", s);
+    console.log("sheet", r);
     if (r.finTotal) {
       const finWh = n(s.int25Wh) + n(s.int14Wh) + n(s.divNoGuWh) + n(s.divGuWh);
       rows.push(
@@ -1022,6 +1079,18 @@
       );
     }
     rows.push(R("산출세액", r.D35, "sum", `적용 구간 세율 ${pct(r.rate)}`));
+    if (r.specialTaxReduction.tax) {
+      rows.push(
+        R(
+          "중소기업 특별세액감면",
+          r.specialTaxReduction.tax,
+          "in1",
+          r.overridden.specialReduction
+            ? `직접 수정 (자동 계산 ${won(r.specialTaxReduction.auto)})`
+            : `감면소득 ${won(r.specialTaxReduction.amount)} × 감면율 ${pct(r.specialTaxReduction.rate)}`,
+        ),
+      );
+    }
     r.extras
       .filter((e) => e.kind === "reduction")
       .forEach((e) =>
@@ -1047,6 +1116,7 @@
           ),
         );
     });
+
     r.extras
       .filter((e) => e.kind !== "reduction")
       .forEach((e) =>

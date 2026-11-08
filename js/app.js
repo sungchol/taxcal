@@ -31,7 +31,7 @@
     const view = document.getElementById("v-" + tab);
     // 다시 그리기 전에 펼쳐져 있던 details를 기억한다
     const opened = new Set(
-      [...view.querySelectorAll("details[open]")].map(detailsKey),
+      [...view.querySelectorAll("details[open]")].map(detailsKey)
     );
     view.innerHTML = V[tab].form(TAX.state[tab]);
     // 같은 이름의 details를 다시 펼친다
@@ -106,7 +106,7 @@
       keepCaret(
         el,
         digits ? Number(digits).toLocaleString("ko-KR") : "",
-        before,
+        before
       );
       return digits ? Number(digits) : 0;
     }
@@ -127,7 +127,7 @@
       keepCaret(
         el,
         digits ? Number(digits).toLocaleString("ko-KR") : "",
-        before,
+        before
       );
       return digits ? Number(digits) : null;
     }
@@ -199,7 +199,7 @@
         tab = tabOf(b.dataset.list);
       if (act === "add") {
         list.push(V[tab].newItem(list.length + 1, b.dataset.list));
-      } else list.splice(+b.dataset.i, 1);
+      } else list.splice(+b.dataset.i, 1); // splice 해당순번 item 삭제 return 삭제항목
       renderForm(tab);
 
       // 새로 추가된 항목의 첫 입력칸에 포커스
@@ -229,7 +229,7 @@
 
   /* 시작 */
   $("#bizcodes").innerHTML = TAX.BIZ_RATES.map(
-    (r) => `<option value="${r[0]} ${U.esc(r[1])}"></option>`,
+    (r) => `<option value="${r[0]} ${U.esc(r[1])}"></option>`
   ).join("");
   ORDER.forEach(renderForm);
   const route = () => show((location.hash || "#income").slice(1));
